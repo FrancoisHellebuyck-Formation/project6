@@ -1,0 +1,1 @@
+docker run -p 5010:5000 ghcr.io/mlflow/mlflow:v3.4.0  mlflow server --host 0.0.0.0
