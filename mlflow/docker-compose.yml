@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: mlflow
       POSTGRES_PASSWORD: mlflow
-      POSTGRES_DB: mlflowdb
+      POSTGRES_DB: mlflow
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -28,16 +28,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      MLFLOW_BACKEND_STORE_URI: postgresql://mlflow:mlflow@postgres:5432/mlflowdb
     ports:
       - "5010:5000"
     volumes:
       - mlflow_artifacts:/mlflow/artifacts
     networks:
       - mlflow_network
+    environment:
+      - MLFLOW_ARTIFACT_ROOT=mlflow-artifacts:/ # Utiliser mlflow-artifacts:/ au lieu d'un chemin
     command: >
-      mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://mlflow:mlflow@postgres:5432/mlflowdb --default-artifact-root /mlflow/artifacts
+      mlflow server  --host 0.0.0.0  --port 5000  --backend-store-uri postgresql://mlflow:mlflow@postgres:5432/mlflow  --default-artifact-root mlflow-artifacts:/  --registry-store-uri postgresql://mlflow:mlflow@postgres:5432/mlflow --serve-artifacts
 
 volumes:
   postgres_data:

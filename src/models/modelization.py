@@ -99,6 +99,7 @@ def print_confusion_matrix_text(y_true, y_pred, class_names=None):
 def print_cross_validation_scores(model, X, y):
     """Affichage des scores de validation croisée"""
     scoring = {
+        "accuracy": "accuracy",
         "precision": "precision",
         "recall": "recall",
         "f1": "f1",
@@ -109,19 +110,23 @@ def print_cross_validation_scores(model, X, y):
 
     # Calcul CV pour chaque métrique
     cv_coefficients = {}
-    for metric in ["precision", "recall", "f1", "f2"]:
+    for metric in ["accuracy", "precision", "recall", "f1", "f2"]:
         metric_scores = scores[f"test_{metric}"]
         mean_score = metric_scores.mean()
         std_score = metric_scores.std()
         cv_coef = std_score / mean_score if mean_score != 0 else float("inf")
         cv_coefficients[metric] = cv_coef
 
+    accuracy_score = scores["test_accuracy"].mean()
     precision_score = scores["test_precision"].mean()
     recall_score = scores["test_recall"].mean()
     f1_score = scores["test_f1"].mean()
     f2_score = scores["test_f2"].mean()
 
     print_title(f"VALIDATION CROISÉE {type(model).__name__}")
+    print_col(
+        f" Accuracy: {accuracy_score:.3f} (+/- {scores['test_accuracy'].std() * 2:.3f}) [CV: {cv_coefficients['accuracy']:.3f}]"
+    )
     print_col(
         f" Précision: {precision_score:.3f} (+/- {scores['test_precision'].std() * 2:.3f}) [CV: {cv_coefficients['precision']:.3f}]"
     )
@@ -146,7 +151,14 @@ def print_cross_validation_scores(model, X, y):
             f" Stabilité {metric}:  {cv_coefficients[metric]:.3f} {stable[metric]}"
         )
     print_end()
-    return precision_score, recall_score, f1_score, f2_score, str(stable)
+    return (
+        accuracy_score,
+        precision_score,
+        recall_score,
+        f1_score,
+        f2_score,
+        str(stable),
+    )
 
 
 def find_optimal_threshold_pr(y_true, y_proba, metric="f1"):
