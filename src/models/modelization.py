@@ -1,3 +1,4 @@
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
@@ -123,7 +124,15 @@ def print_cross_validation_scores(model, X, y):
     f1_score = scores["test_f1"].mean()
     f2_score = scores["test_f2"].mean()
 
-    print_title(f"VALIDATION CROISÉE {type(model).__name__}")
+    if isinstance(model, Pipeline):
+        # C'est un pipeline
+        model_name, model_t = model.steps[-1]
+        model_type = type(model_t).__name__
+    else:
+        # C'est directement un modèle
+        model_type = type(model).__name__
+
+    print_title(f"VALIDATION CROISÉE {model_type}")
     print_col(
         f" Accuracy: {accuracy_score:.3f} (+/- {scores['test_accuracy'].std() * 2:.3f}) [CV: {cv_coefficients['accuracy']:.3f}]"
     )

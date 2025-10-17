@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 def print_title(title, width=80):
     """
     Affiche un titre formaté pour les textes
@@ -27,4 +30,20 @@ def quick_df_info(df, titre="Information"):
     for i, col in enumerate(df.columns):
         dtype_str = str(df[col].dtype)
         print_col(f"{col:<25} {dtype_str:<10}")
+    print_end()
+
+
+def print_results(model_scores):
+    """
+    Affiche les résultats des modèles dans un tableau formaté
+
+    Args:
+        model_scores: liste de dictionnaires avec les scores des modèles
+    """
+    # Tableau des performances des modèles
+    scores_df = pd.DataFrame(model_scores)
+    scores_df.set_index("Model", inplace=True)
+    scores_df.sort_values(by=["F2-score", "Recall"], ascending=False, inplace=True)
+    print_title("TABLEAU DES PERFORMANCES DES MODÈLES PAR F2-score")
+    print(scores_df.round(3).to_string(float_format="{:.3f}".format))
     print_end()
