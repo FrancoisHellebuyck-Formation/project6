@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import psutil
 import os
+import shap
+import pickle
 
 
 def create_experiment_with_metadata(experiment_name, description, tags=None):
@@ -229,7 +231,7 @@ def log_feature_importance_with_names(pipeline, X_train, mlflow_enabled=True):
     axes[1].grid(axis="y", alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig("feature_importance_complete.png", dpi=150, bbox_inches="tight")
+    plt.savefig("feature_importance_complete.png", dpi=100, bbox_inches="tight")
 
     if mlflow_enabled:
         mlflow.log_artifact("feature_importance_complete.png")
@@ -255,3 +257,100 @@ def log_feature_importance_with_names(pipeline, X_train, mlflow_enabled=True):
     print("✅ Feature importances sauvegardées avec les vrais noms!")
 
     return fi_df
+
+
+def log_shap_artifacts(
+    pipeline, X_test, classifier_name="classifier", scaler_name="scaler", prefix="shap"
+):
+    """
+    Calcule et sauvegarde les valeurs SHAP et graphiques dans MLflow
+
+    Parameters:
+    -----------
+    pipeline : Pipeline
+        Pipeline imblearn/sklearn entraîné
+    X_test : DataFrame ou array
+        Données de test
+    classifier_name : str, default='classifier'
+        Nom de l'étape du classifier dans le pipeline
+    scaler_name : str, default='scaler'
+        Nom de l'étape du scaler dans le pipeline
+    prefix : str, default='shap'
+        Préfixe pour les noms de fichiers
+
+    Returns:
+    --------
+    shap_values : array ou list
+        Valeurs SHAP calculées
+    explainer : shap.TreeExplainer
+        L'explainer SHAP
+    """
+
+    # 1. Extraire le classifier du pipeline
+    model = pipeline.named_steps[classifier_name]
+
+    # 2. Transformer X_test avec le scaler
+    X_test_transformed = pipeline.named_steps[scaler_name].transform(X_test)
+
+    # 3. Calculer les valeurs SHAP
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_test_transformed)
+
+    # 4. Gérer binaire vs multiclasse
+    if isinstance(shap_values, list):
+        shap_values_plot = shap_values[1]  # Classe positive pour binaire
+    else:
+        shap_values_plot = shap_values
+
+    # 5. Summary plot (beeswarm)
+    plt.figure(figsize=(10, 8))
+    shap.summary_plot(
+        shap_values_plot,
+        X_test_transformed,
+        feature_names=X_test.columns if hasattr(X_test, "columns") else None,
+        show=False,
+    )
+    plt.title("SHAP Summary Plot")
+    plt.tight_layout()
+    filename = f"{prefix}_summary_plot.png"
+    plt.savefig(filename, bbox_inches="tight", dpi=100)
+    mlflow.log_artifact(filename)
+    plt.show()
+    plt.close()
+    os.remove(filename)
+
+    # 6. Bar plot (importance)
+    plt.figure(figsize=(10, 8))
+    shap.summary_plot(
+        shap_values_plot,
+        X_test_transformed,
+        feature_names=X_test.columns if hasattr(X_test, "columns") else None,
+        plot_type="bar",
+        show=False,
+    )
+    plt.title("SHAP Feature Importance")
+    plt.tight_layout()
+    filename = f"{prefix}_importance_bar.png"
+    plt.savefig(filename, bbox_inches="tight", dpi=100)
+    mlflow.log_artifact(filename)
+    plt.show()
+    plt.close()
+    os.remove(filename)
+
+    # 7. Sauvegarder les valeurs SHAP brutes
+    filename = f"{prefix}_values.pkl"
+    with open(filename, "wb") as f:
+        pickle.dump(shap_values, f)
+    mlflow.log_artifact(filename)
+    os.remove(filename)
+
+    # 8. Sauvegarder l'explainer
+    filename = f"{prefix}_explainer.pkl"
+    with open(filename, "wb") as f:
+        pickle.dump(explainer, f)
+    mlflow.log_artifact(filename)
+    os.remove(filename)
+
+    print("✅ Tous les artifacts SHAP sauvegardés dans MLflow!")
+
+    return shap_values, explainer

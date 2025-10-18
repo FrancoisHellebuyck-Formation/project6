@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.pipeline import Pipeline
+
 from sklearn.metrics import (
     fbeta_score,
     precision_score,
@@ -9,7 +9,7 @@ from sklearn.metrics import (
     f1_score,
     precision_recall_curve,
 )
-from src.visualization.visu_text import print_title, print_col, print_end
+from src.visualization.visu_text import print_title, print_col
 
 # ================================
 # 1. OPTIMISATION DU SEUIL POUR F2
@@ -108,7 +108,7 @@ def optimize_threshold_f2(model, X_val, y_val, thresholds=None):
 # ================================
 
 
-def plot_threshold_optimization(results_df, best_threshold):
+def plot_threshold_optimization(results_df, best_threshold, mlflow_log=True):
     """Visualise l'optimisation du seuil"""
 
     fig, axes = plt.subplots(1, 2, figsize=(8, 3))
@@ -169,40 +169,19 @@ def plot_threshold_optimization(results_df, best_threshold):
     ax2.set_title("Précision vs Rappel")
     ax2.legend()
     ax2.grid(True, alpha=0.3)
-
-    # # 3. Nombre de prédictions positives
-    # ax3 = axes[1, 0]
-    # ax3.plot(results_df['threshold'], results_df['predicted_positive'], 'purple', linewidth=2)
-    # ax3.axvline(x=best_threshold, color='red', linestyle=':', alpha=0.7, label=f'Optimal: {best_threshold:.3f}')
-    # ax3.set_xlabel('Seuil')
-    # ax3.set_ylabel('Nombre de prédictions positives')
-    # ax3.set_title('Impact du Seuil sur les Prédictions')
-    # ax3.legend()
-    # ax3.grid(True, alpha=0.3)
-
-    # # 4. Heat map des métriques par seuil
-    # ax4 = axes[1, 1]
-
-    # # Créer une matrice pour le heatmap
-    # metrics_for_heatmap = results_df[['f2_score', 'f1_score', 'precision', 'recall']].T
-
-    # # Sélectionner quelques seuils représentatifs pour l'affichage
-    # step = max(1, len(results_df) // 20)
-    # selected_indices = range(0, len(results_df), step)
-    # selected_thresholds = results_df.iloc[selected_indices]['threshold'].round(2)
-
-    # im = ax4.imshow(metrics_for_heatmap.iloc[:, selected_indices], cmap='RdYlGn', aspect='auto')
-    # ax4.set_xticks(range(len(selected_indices)))
-    # ax4.set_xticklabels(selected_thresholds, rotation=45)
-    # ax4.set_yticks(range(4))
-    # ax4.set_yticklabels(['F2', 'F1', 'Precision', 'Recall'])
-    # ax4.set_title('Heatmap des Métriques')
-
-    # Colorbar
-    # plt.colorbar(im, ax=ax4, shrink=0.8)
-
     plt.tight_layout()
-    plt.show()
+    if mlflow_log:
+        plt.savefig("threshold_optimization.png", dpi=100, bbox_inches="tight")
+        import mlflow
+
+        mlflow.log_artifact("threshold_optimization.png")
+        plt.show()
+        plt.close()
+        import os
+
+        os.remove("threshold_optimization.png")
+    else:
+        plt.show()
 
 
 # ================================
@@ -210,7 +189,7 @@ def plot_threshold_optimization(results_df, best_threshold):
 # ================================
 
 
-def advanced_threshold_optimization(model, X_val, y_val):
+def advanced_threshold_optimization(model, X_val, y_val, mlflow_log=True):
     """Optimisation avancée avec courbe Precision-Recall"""
 
     # Prédictions probabilistes
@@ -264,6 +243,17 @@ def advanced_threshold_optimization(model, X_val, y_val):
     plt.title("Courbe Precision-Recall avec Seuil Optimal F2")
     plt.legend()
     plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    if mlflow_log:
+        plt.savefig("precision_recall_curve.png", dpi=100, bbox_inches="tight")
+        import mlflow
+
+        mlflow.log_artifact("precision_recall_curve.png")
+        plt.show()
+        plt.close()
+        import os
+
+        os.remove("precision_recall_curve.png")
     plt.show()
 
     return best_threshold_pr, best_f2_pr
@@ -299,53 +289,6 @@ def evaluate_with_optimal_threshold(model, X_val, y_val, optimal_threshold):
     precision_default = precision_score(y_val, y_pred_default)
     recall_default = recall_score(y_val, y_pred_default)
 
-    # Affichage comparatif
-    # comparison_df = pd.DataFrame(
-    #     {
-    #         f"Seuil Optimal ({optimal_threshold:.3f})": [
-    #             f2_optimal,
-    #             f1_optimal,
-    #             precision_optimal,
-    #             recall_optimal,
-    #         ],
-    #         "Seuil Défaut (0.5)": [
-    #             f2_default,
-    #             f1_default,
-    #             precision_default,
-    #             recall_default,
-    #         ],
-    #         "Amélioration": [
-    #             f2_optimal - f2_default,
-    #             f1_optimal - f1_default,
-    #             precision_optimal - precision_default,
-    #             recall_optimal - recall_default,
-    #         ],
-    #     },
-    #     index=["F2-Score", "F1-Score", "Précision", "Rappel"],
-    # )
-
-    # print(comparison_df.round(4))
-
-    # # Matrices de confusion
-    # fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-    # # Matrice confusion seuil optimal
-    # cm_optimal = confusion_matrix(y_val, y_pred_optimal)
-    # sns.heatmap(cm_optimal, annot=True, fmt='d', cmap='Blues', ax=axes[0])
-    # axes[0].set_title(f'Matrice de Confusion - Seuil Optimal ({optimal_threshold:.3f})')
-    # axes[0].set_xlabel('Prédiction')
-    # axes[0].set_ylabel('Réalité')
-
-    # # Matrice confusion seuil défaut
-    # cm_default = confusion_matrix(y_val, y_pred_default)
-    # sns.heatmap(cm_default, annot=True, fmt='d', cmap='Reds', ax=axes[1])
-    # axes[1].set_title('Matrice de Confusion - Seuil Défaut (0.5)')
-    # axes[1].set_xlabel('Prédiction')
-    # axes[1].set_ylabel('Réalité')
-
-    # plt.tight_layout()
-    # plt.show()
-
     return {
         "optimal_threshold": optimal_threshold,
         "metrics_optimal": {
@@ -369,7 +312,9 @@ def evaluate_with_optimal_threshold(model, X_val, y_val, optimal_threshold):
 # ================================
 
 
-def complete_threshold_optimization(model, X_val, y_val, plot_results=True):
+def complete_threshold_optimization(
+    model, X_val, y_val, plot_results=True, mlflow_log=True
+):
     """Pipeline complet d'optimisation du seuil"""
 
     # print("🚀 OPTIMISATION COMPLÈTE DU SEUIL")
@@ -379,7 +324,9 @@ def complete_threshold_optimization(model, X_val, y_val, plot_results=True):
     best_threshold, best_f2, results_df = optimize_threshold_f2(model, X_val, y_val)
 
     # 2. Optimisation via courbe PR
-    best_threshold_pr, best_f2_pr = advanced_threshold_optimization(model, X_val, y_val)
+    best_threshold_pr, best_f2_pr = advanced_threshold_optimization(
+        model, X_val, y_val, mlflow_log
+    )
 
     # 3. Choisir le meilleur des deux
     if best_f2_pr > best_f2:
@@ -397,7 +344,7 @@ def complete_threshold_optimization(model, X_val, y_val, plot_results=True):
 
     # 4. Visualisations
     if plot_results:
-        plot_threshold_optimization(results_df, final_threshold)
+        plot_threshold_optimization(results_df, final_threshold, mlflow_log)
 
     # 5. Évaluation finale
     evaluation_results = evaluate_with_optimal_threshold(
