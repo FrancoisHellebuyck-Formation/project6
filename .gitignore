@@ -685,3 +685,11 @@ app.db
 model/backup
 Livraison
 Livraison.zip
+
+# MLflow essentials
+mlruns/
+mlartifacts/
+mlflow.db
+mlflow.db.lock
+.mlflow/
+.mlflow_temp/

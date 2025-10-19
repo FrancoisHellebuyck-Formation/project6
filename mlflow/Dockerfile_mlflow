@@ -1,0 +1,28 @@
+FROM python:3.11-slim
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Installer les dépendances système
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copier le fichier requirements (optionnel)
+COPY requirements.txt .
+
+# Installer MLflow et les dépendances
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Créer le répertoire pour les artefacts
+RUN mkdir -p /app/mlartifacts
+RUN chmod a+rw /app
+RUN chmod a+rw /app/mlartifacts
+
+# Exposer le port MLflow
+EXPOSE 5000
+
+# Commande par défaut
+CMD ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000"]

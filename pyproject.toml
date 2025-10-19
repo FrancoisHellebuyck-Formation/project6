@@ -1,0 +1,29 @@
+[project]
+name = "project6"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",
+    "W503",
+    "E402",
+    "E501",
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv", 
+    "venv",
+    ".jupyter",
+    "alembic/versions",
+    "migrations",
+]
+per-file-ignores = [
+    "*.ipynb:E402",
+    "alembic/*:E402,F401",
+]
