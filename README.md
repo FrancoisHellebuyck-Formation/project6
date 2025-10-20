@@ -17,6 +17,7 @@ Projet d'initiation au MLOps visant à développer un système de prédiction du
 - [Notebooks](#notebooks)
 - [Modules](#modules)
 - [MLflow](#mlflow)
+- [Screenshots](#screenshots)
 - [Développement](#développement)
 - [Contribuer](#contribuer)
 
@@ -64,6 +65,7 @@ project6/
 │   ├── constantes.py           # Configuration MLflow et tags
 │   └── utils_mlflow.py         # Fonctions utilitaires MLflow
 ├── mlflow/                      # Artefacts MLflow
+├── screenshots/                 # Captures d'écran du projet
 ├── pyproject.toml              # Configuration du projet
 └── main.py                     # Point d'entrée principal
 ```
@@ -277,6 +279,11 @@ mlflow ui --port 5010
 ```
 
 Accéder à l'interface : [http://127.0.0.1:5010](http://127.0.0.1:5010)
+
+## Screenshots
+
+Le dossier [screenshots/](screenshots/) contient des captures d'écran illustrant les différentes étapes et résultats du projet. 
+Ces captures d'écran permettent de visualiser rapidement les résultats clés du projet et le fonctionnement du pipeline MLOps.
 
 ## Développement
 
